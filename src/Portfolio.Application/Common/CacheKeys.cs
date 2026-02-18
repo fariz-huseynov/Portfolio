@@ -23,4 +23,6 @@ public static class CacheKeys
 
     public static string Permissions(IEnumerable<string> roleNames)
         => $"permissions:{string.Join(",", roleNames.OrderBy(r => r))}";
+
+    public static string AiGeneration(Guid id) => $"ai:generation:{id}";
 }

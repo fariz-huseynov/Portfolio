@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Portfolio.Api.Hubs;
+using Portfolio.Application.Common;
 using Portfolio.Application.Interfaces;
 
 namespace Portfolio.Api.Services;
@@ -21,7 +22,7 @@ public class AdminNotificationService : IAdminNotificationService
     {
         try
         {
-            await _hubContext.Clients.Group("Admins").SendAsync(
+            await _hubContext.Clients.Group(PolicyNames.AdminsGroup).SendAsync(
                 "NewLeadReceived",
                 new { Name = leadName, Email = leadEmail, ReceivedAt = DateTime.UtcNow },
                 ct);

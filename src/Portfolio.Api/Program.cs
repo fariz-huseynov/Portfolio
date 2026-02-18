@@ -16,6 +16,7 @@ using Portfolio.Api.Authorization;
 using Portfolio.Api.Hubs;
 using Portfolio.Api.Middleware;
 using Portfolio.Api.Services;
+using Portfolio.Application.Common;
 using Portfolio.Application.Interfaces;
 using Portfolio.Infrastructure;
 using Portfolio.Infrastructure.Data;
@@ -75,7 +76,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy(PolicyNames.AllowFrontend, policy =>
     {
         policy.WithOrigins(
                 builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
@@ -83,6 +84,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+var rateLimitConfig = builder.Configuration.GetSection("RateLimiting");
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -104,6 +107,8 @@ builder.Services.AddRateLimiter(options =>
                 "Too many password reset requests. Please wait 15 minutes before trying again.",
             var p when p.Contains("/auth/verify-2fa") =>
                 "Too many verification attempts. Please wait a minute before trying again.",
+            var p when p.Contains("/admin/ai/") =>
+                "Too many AI generation requests. Please wait a minute before trying again.",
             _ => "Too many requests. Please wait a moment and try again."
         };
 
@@ -119,44 +124,52 @@ builder.Services.AddRateLimiter(options =>
         }, cancellationToken);
     };
 
-    options.AddFixedWindowLimiter("LeadSubmit", limiterOptions =>
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitLeadSubmit, limiterOptions =>
     {
-        limiterOptions.PermitLimit = 5;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("LeadSubmit:PermitLimit", 5);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("LeadSubmit:WindowMinutes", 1));
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 0;
     });
 
-    options.AddFixedWindowLimiter("Auth", limiterOptions =>
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitAuth, limiterOptions =>
     {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("Auth:PermitLimit", 10);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("Auth:WindowMinutes", 1));
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 0;
     });
 
-    options.AddFixedWindowLimiter("PublicApi", limiterOptions =>
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitPublicApi, limiterOptions =>
     {
-        limiterOptions.PermitLimit = 30;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("PublicApi:PermitLimit", 30);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("PublicApi:WindowMinutes", 1));
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 0;
     });
 
-    options.AddFixedWindowLimiter("ForgotPassword", limiterOptions =>
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitForgotPassword, limiterOptions =>
     {
-        limiterOptions.PermitLimit = 3;
-        limiterOptions.Window = TimeSpan.FromMinutes(15);
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("ForgotPassword:PermitLimit", 3);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("ForgotPassword:WindowMinutes", 15));
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 0;
     });
 
-    options.AddFixedWindowLimiter("TwoFactorVerify", limiterOptions =>
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitTwoFactorVerify, limiterOptions =>
     {
-        limiterOptions.PermitLimit = 5;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("TwoFactorVerify:PermitLimit", 5);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("TwoFactorVerify:WindowMinutes", 1));
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 0;
+    });
+
+    options.AddFixedWindowLimiter(PolicyNames.RateLimitAiGeneration, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = rateLimitConfig.GetValue("AiGeneration:PermitLimit", 10);
+        limiterOptions.Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("AiGeneration:WindowMinutes", 1));
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 2;
     });
 
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
@@ -170,8 +183,8 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: ip,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 100,
-                Window = TimeSpan.FromMinutes(1)
+                PermitLimit = rateLimitConfig.GetValue("Global:PermitLimit", 100),
+                Window = TimeSpan.FromMinutes(rateLimitConfig.GetValue("Global:WindowMinutes", 1))
             });
     });
 });
@@ -184,8 +197,8 @@ builder.Services.AddStackExchangeRedisOutputCache(options =>
 });
 builder.Services.AddOutputCache(options =>
 {
-    options.AddPolicy("PublicContent", builder =>
-        builder.Expire(TimeSpan.FromMinutes(5)).Tag("public-content"));
+    options.AddPolicy(PolicyNames.PublicContent, builder =>
+        builder.Expire(TimeSpan.FromMinutes(5)).Tag(PolicyNames.PublicContentTag));
 });
 
 builder.Services.AddResponseCompression(options =>
@@ -296,7 +309,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
-app.UseCors("AllowFrontend");
+app.UseCors(PolicyNames.AllowFrontend);
 
 app.UseResponseCaching();
 app.UseOutputCache();

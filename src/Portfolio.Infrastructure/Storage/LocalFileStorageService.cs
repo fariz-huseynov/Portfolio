@@ -39,14 +39,13 @@ public class LocalFileStorageService : IFileStorageService
         return (relativePath, storedFileName);
     }
 
-    public Task DeleteFileAsync(string relativePath, CancellationToken ct = default)
+    public async Task DeleteFileAsync(string relativePath, CancellationToken ct = default)
     {
         var physicalPath = Path.Combine(_environment.WebRootPath, relativePath.TrimStart('/'));
         if (File.Exists(physicalPath))
         {
-            File.Delete(physicalPath);
+            await Task.Run(() => File.Delete(physicalPath), ct);
         }
-        return Task.CompletedTask;
     }
 
     public Task<bool> FileExistsAsync(string relativePath, CancellationToken ct = default)

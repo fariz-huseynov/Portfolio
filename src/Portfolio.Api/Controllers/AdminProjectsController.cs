@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Portfolio.Api.Authorization;
+using Portfolio.Application.Common;
 using Portfolio.Application.DTOs;
 using Portfolio.Application.DTOs.Pagination;
 using Portfolio.Application.Interfaces;
@@ -14,8 +15,6 @@ namespace Portfolio.Api.Controllers;
 [Route("api/v{version:apiVersion}/admin/projects")]
 public class AdminProjectsController : ControllerBase
 {
-    private const string PublicContentCacheTag = "public-content";
-
     private readonly IProjectService _projectService;
     private readonly IOutputCacheStore _outputCacheStore;
 
@@ -57,7 +56,7 @@ public class AdminProjectsController : ControllerBase
         [FromBody] ProjectCreateDto dto, CancellationToken ct)
     {
         var project = await _projectService.CreateProjectAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return CreatedAtAction(nameof(GetById), new { id = project.Id }, project);
     }
 
@@ -67,7 +66,7 @@ public class AdminProjectsController : ControllerBase
         Guid id, [FromBody] ProjectUpdateDto dto, CancellationToken ct)
     {
         var project = await _projectService.UpdateProjectAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(project);
     }
 
@@ -76,7 +75,7 @@ public class AdminProjectsController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _projectService.DeleteProjectAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 }

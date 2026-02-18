@@ -38,6 +38,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, 
     // File Management
     public DbSet<FileMetadata> FileMetadata => Set<FileMetadata>();
 
+    // AI Content Generation
+    public DbSet<AiGenerationRecord> AiGenerationRecords => Set<AiGenerationRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

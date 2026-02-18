@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Portfolio.Api.Authorization;
+using Portfolio.Application.Common;
 using Portfolio.Application.DTOs;
 using Portfolio.Application.DTOs.Pagination;
 using Portfolio.Application.Interfaces;
@@ -14,8 +15,6 @@ namespace Portfolio.Api.Controllers;
 [Route("api/v{version:apiVersion}/admin/blogs")]
 public class AdminBlogsController : ControllerBase
 {
-    private const string PublicContentCacheTag = "public-content";
-
     private readonly IBlogPostService _blogPostService;
     private readonly IOutputCacheStore _outputCacheStore;
 
@@ -57,7 +56,7 @@ public class AdminBlogsController : ControllerBase
         [FromBody] BlogPostCreateDto dto, CancellationToken ct)
     {
         var post = await _blogPostService.CreatePostAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return CreatedAtAction(nameof(GetById), new { id = post.Id }, post);
     }
 
@@ -67,7 +66,7 @@ public class AdminBlogsController : ControllerBase
         Guid id, [FromBody] BlogPostUpdateDto dto, CancellationToken ct)
     {
         var post = await _blogPostService.UpdatePostAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(post);
     }
 
@@ -76,7 +75,7 @@ public class AdminBlogsController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _blogPostService.DeletePostAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -85,7 +84,7 @@ public class AdminBlogsController : ControllerBase
     public async Task<IActionResult> Publish(Guid id, CancellationToken ct)
     {
         await _blogPostService.PublishPostAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -94,7 +93,7 @@ public class AdminBlogsController : ControllerBase
     public async Task<IActionResult> Unpublish(Guid id, CancellationToken ct)
     {
         await _blogPostService.UnpublishPostAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 }

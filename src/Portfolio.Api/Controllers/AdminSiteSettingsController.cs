@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Portfolio.Api.Authorization;
+using Portfolio.Application.Common;
 using Portfolio.Application.DTOs.Content;
 using Portfolio.Application.Interfaces;
 using Asp.Versioning;
@@ -38,7 +39,7 @@ public class AdminSiteSettingsController : ControllerBase
         [FromBody] SiteSettingsUpdateDto dto, CancellationToken ct)
     {
         var settings = await _siteContentService.UpdateSiteSettingsAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync("public-content", ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(settings);
     }
 }

@@ -6,6 +6,7 @@ using Portfolio.Application.Common;
 using Portfolio.Application.Interfaces;
 using Portfolio.Application.Services;
 using Portfolio.Domain.Interfaces;
+using Portfolio.Infrastructure.AiProviders;
 using Portfolio.Infrastructure.Caching;
 using Portfolio.Infrastructure.Data;
 using Portfolio.Infrastructure.Identity;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IBlogPostRepository, BlogPostRepository>();
         services.AddScoped<IIpRuleRepository, IpRuleRepository>();
+        services.AddScoped<IAiGenerationRecordRepository, AiGenerationRecordRepository>();
 
         // Application Services
         services.AddScoped<ILeadService, LeadService>();
@@ -51,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<ISiteContentService, SiteContentService>();
         services.AddScoped<IIpRuleService, IpRuleService>();
         services.AddScoped<IFileManagementService, FileManagementService>();
+        services.AddScoped<IAiContentService, AiContentService>();
 
         // Identity Services
         services.AddScoped<IAuthService, AuthService>();
@@ -83,6 +86,17 @@ public static class DependencyInjection
         // File Storage
         services.Configure<FileStorageOptions>(configuration.GetSection("FileStorage"));
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+
+        // AI Content Generation
+        services.Configure<AiSettings>(configuration.GetSection(AiSettings.SectionName));
+        services.AddHttpClient("OpenAi", c => c.Timeout = TimeSpan.FromSeconds(120));
+        services.AddHttpClient("Anthropic", c => c.Timeout = TimeSpan.FromSeconds(120));
+        services.AddHttpClient("Gemini", c => c.Timeout = TimeSpan.FromSeconds(120));
+        services.AddHttpClient("Ollama", c => c.Timeout = TimeSpan.FromSeconds(300));
+        services.AddScoped<IAiProvider, OpenAiProvider>();
+        services.AddScoped<IAiProvider, AnthropicProvider>();
+        services.AddScoped<IAiProvider, GeminiProvider>();
+        services.AddScoped<IAiProvider, OllamaProvider>();
 
         // Health Checks
         services.AddHealthChecks()

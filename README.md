@@ -44,7 +44,8 @@ curl http://localhost:5001/api/v1/admin/users \
 | Database | SQL Server (Azure SQL Edge for ARM/Docker) |
 | Cache | Redis (L1 in-memory + L2 distributed) |
 | Auth | JWT with refresh tokens, TOTP 2FA |
-| Authorization | Permission-based RBAC (39 permissions) |
+| Authorization | Permission-based RBAC (27 permissions) |
+| AI | Multi-provider content generation (OpenAI, Anthropic, Gemini, Ollama) |
 | Observability | OpenTelemetry + Aspire Dashboard |
 | Logging | Serilog (structured, console) |
 | API Docs | Swagger / OpenAPI |
@@ -58,9 +59,14 @@ Portfolio/
 ├── src/
 │   ├── Portfolio.Domain/             # Entities, interfaces, constants
 │   ├── Portfolio.Application/        # DTOs, service interfaces, business logic
-│   ├── Portfolio.Infrastructure/     # EF Core, Identity, repositories, caching
+│   ├── Portfolio.Infrastructure/     # EF Core, Identity, repositories, caching, AI providers
 │   ├── Portfolio.Api/                # Controllers, middleware, Program.cs
 │   └── Portfolio.ServiceDefaults/    # OpenTelemetry, health checks, service discovery
+├── tests/
+│   ├── Portfolio.Api.Tests/          # Integration tests
+│   ├── Portfolio.Application.Tests/  # Unit tests (services)
+│   └── Portfolio.Infrastructure.Tests/ # Unit tests (infrastructure)
+├── docs/                             # Detailed documentation
 ├── docker-compose.yml                # Full dev environment (SQL + Redis + Aspire + API)
 ├── Dockerfile                        # Multi-stage production build
 └── Portfolio.sln
@@ -73,10 +79,24 @@ Domain (entities, repository interfaces)
     ↑
 Application (DTOs, service interfaces, business logic)
     ↑
-Infrastructure (EF Core, Identity, Redis cache, email, file storage)
+Infrastructure (EF Core, Identity, Redis cache, AI providers, email, file storage)
     ↑
 API (controllers, middleware, auth pipeline, SignalR hubs)
 ```
+
+## Documentation
+
+Detailed documentation is available in the [`docs/`](docs/) folder:
+
+| Document | Description |
+|----------|-------------|
+| [Setup Guide](docs/setup.md) | Get the project running locally or with Docker |
+| [Architecture](docs/architecture.md) | Clean Architecture layers, design patterns |
+| [API Reference](docs/api-reference.md) | All 109 endpoints with request/response examples |
+| [AI Features](docs/ai-features.md) | AI content generation: providers, configuration, usage |
+| [Configuration](docs/configuration.md) | All configuration sections explained |
+| [Testing](docs/testing.md) | Test strategy, running tests, test infrastructure |
+| [Deployment](docs/deployment.md) | Production deployment guide |
 
 ## Docker Services
 
@@ -153,13 +173,31 @@ The API starts on **http://localhost:5001**. All configuration is in `appsetting
 | Users | CRUD + reset password | Users.* |
 | Roles | CRUD + permissions | Users.* |
 | Blog Posts | CRUD + publish/unpublish | Blogs.* |
-| Projects | CRUD + publish/unpublish | Projects.* |
+| Projects | CRUD | Projects.* |
 | Leads | List + mark read | Leads.* |
 | Site Content | Hero, About, Skills, Experiences, Services, Testimonials, Social Links, Menu | SiteContent.* |
 | Settings | View + update | Settings.* |
 | IP Rules | CRUD | Security.* |
 | Files | Upload, list, delete | Files.Manage |
+| AI Content | Generate text, rewrite, generate images, history, providers | AiContent.* |
 | Profile | View + update + avatar | Any authenticated user |
+
+For the full 109-endpoint reference with request/response examples, see [docs/api-reference.md](docs/api-reference.md).
+
+## AI Content Generation
+
+Multi-provider AI content generation supporting text and image creation for your portfolio content.
+
+| Provider | Text | Image | Default Model |
+|----------|:----:|:-----:|---------------|
+| OpenAI | Yes | Yes | gpt-4o / dall-e-3 |
+| Anthropic | Yes | No | claude-sonnet-4-20250514 |
+| Google Gemini | Yes | Yes | gemini-2.0-flash / imagen-3 |
+| Ollama (local) | Yes | No | llama3 |
+
+Supports 9 operation types: blog posts, text rewriting, image generation, skill/project/about/experience/service descriptions, and testimonial suggestions.
+
+See [docs/ai-features.md](docs/ai-features.md) for setup and usage.
 
 ## Security
 
@@ -171,13 +209,14 @@ The API starts on **http://localhost:5001**. All configuration is in `appsetting
 | ForgotPassword | 3/15min/IP | Password reset |
 | TwoFactorVerify | 5/min/IP | 2FA verification |
 | LeadSubmit | 5/min/IP | Contact form |
+| AiGeneration | 10/min/IP | AI content generation |
 | PublicApi | 30/min/IP | Public endpoints |
 | Global | 100/min/IP | All endpoints |
 
 ### Other Security Features
 
 - **JWT authentication** with short-lived access tokens and refresh tokens
-- **Permission-based authorization** with 39 granular permissions
+- **Permission-based authorization** with 27 granular permissions
 - **TOTP two-factor authentication** with recovery codes
 - **CAPTCHA protection** on lead submission (Lazy.Captcha.Core)
 - **HTML sanitization** on all rich-text content (XSS prevention)
@@ -193,9 +232,9 @@ The API starts on **http://localhost:5001**. All configuration is in `appsetting
 
 Two-tier hybrid caching strategy:
 
-- **L1**: In-memory cache (fast, per-instance, 5-minute TTL)
-- **L2**: Redis distributed cache (shared, survives restarts, 10-minute TTL)
-- **Output Cache**: Redis-backed HTTP response caching for public endpoints
+- **L1**: In-memory cache (fast, per-instance)
+- **L2**: Redis distributed cache (shared, survives restarts)
+- **Output Cache**: Redis-backed HTTP response caching for public endpoints (5-minute TTL)
 
 ## Observability
 
@@ -230,6 +269,18 @@ docker compose down -v    # removes volumes (data)
 docker compose up -d      # recreates everything fresh
 ```
 
+## Testing
+
+```bash
+# Run all tests (119 tests across 3 projects)
+dotnet test Portfolio.sln
+
+# Build only
+dotnet build Portfolio.sln
+```
+
+See [docs/testing.md](docs/testing.md) for test strategy and infrastructure details.
+
 ## Production Deployment
 
 For production, override the development defaults with environment variables:
@@ -237,19 +288,19 @@ For production, override the development defaults with environment variables:
 ```bash
 export ConnectionStrings__DefaultConnection="Server=prod-server;..."
 export ConnectionStrings__Redis="your-redis:6379"
-export Jwt__Secret="<production-secret-min-32-chars>"
+export Jwt__Secret="<production-secret-min-64-chars>"
 export Seed__AdminEmail="admin@yourdomain.com"
 export Seed__AdminPassword="<strong-password>"
 ```
 
-See `.env.example` for a complete template.
-
-The Docker image runs as a non-root user and exposes port 8080 internally. Map it to any external port:
+The Docker image runs as a non-root user and exposes port 8080 internally:
 
 ```bash
 docker build -t portfolio-api .
 docker run -p 443:8080 portfolio-api
 ```
+
+See [docs/deployment.md](docs/deployment.md) for the full production guide with Nginx config, security checklist, and scaling notes.
 
 ## Contributing
 

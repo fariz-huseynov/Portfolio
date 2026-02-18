@@ -37,6 +37,9 @@ public static class Permissions
 
     public const string FilesManage = "Files.Manage";
 
+    public const string AiContentGenerate = "AiContent.Generate";
+    public const string AiContentView = "AiContent.View";
+
     public static IReadOnlyList<string> All =>
     [
         DashboardView,
@@ -48,6 +51,7 @@ public static class Permissions
         SettingsView, SettingsEdit,
         LogsView, LogsDelete,
         SecurityView, SecurityManage,
-        FilesManage
+        FilesManage,
+        AiContentGenerate, AiContentView
     ];
 }

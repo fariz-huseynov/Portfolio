@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Portfolio.Application.Common;
 
 namespace Portfolio.Api.Hubs;
 
@@ -23,7 +24,7 @@ public class AdminNotificationHub : Hub
             Context.ConnectionId,
             userId ?? "unknown");
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
+        await Groups.AddToGroupAsync(Context.ConnectionId, PolicyNames.AdminsGroup);
         await base.OnConnectedAsync();
     }
 
@@ -33,7 +34,7 @@ public class AdminNotificationHub : Hub
             "Admin disconnected. ConnectionId: {ConnectionId}",
             Context.ConnectionId);
 
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "Admins");
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, PolicyNames.AdminsGroup);
         await base.OnDisconnectedAsync(exception);
     }
 }

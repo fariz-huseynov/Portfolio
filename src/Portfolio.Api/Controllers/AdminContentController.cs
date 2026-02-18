@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Portfolio.Api.Authorization;
+using Portfolio.Application.Common;
 using Portfolio.Application.DTOs.Content;
 using Portfolio.Application.Interfaces;
 using Asp.Versioning;
@@ -13,8 +14,6 @@ namespace Portfolio.Api.Controllers;
 [Route("api/v{version:apiVersion}/admin/content")]
 public class AdminContentController : ControllerBase
 {
-    private const string PublicContentCacheTag = "public-content";
-
     private readonly ISiteContentService _siteContentService;
     private readonly IOutputCacheStore _outputCacheStore;
 
@@ -42,7 +41,7 @@ public class AdminContentController : ControllerBase
         [FromBody] HeroSectionUpdateDto dto, CancellationToken ct)
     {
         var hero = await _siteContentService.UpdateHeroSectionAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(hero);
     }
 
@@ -62,7 +61,7 @@ public class AdminContentController : ControllerBase
         [FromBody] AboutSectionUpdateDto dto, CancellationToken ct)
     {
         var about = await _siteContentService.UpdateAboutSectionAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(about);
     }
 
@@ -82,7 +81,7 @@ public class AdminContentController : ControllerBase
         [FromBody] SkillCreateDto dto, CancellationToken ct)
     {
         var skill = await _siteContentService.CreateSkillAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/skills/{skill.Id}", skill);
     }
 
@@ -92,7 +91,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] SkillUpdateDto dto, CancellationToken ct)
     {
         var skill = await _siteContentService.UpdateSkillAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(skill);
     }
 
@@ -101,7 +100,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteSkill(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteSkillAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -121,7 +120,7 @@ public class AdminContentController : ControllerBase
         [FromBody] ExperienceCreateDto dto, CancellationToken ct)
     {
         var experience = await _siteContentService.CreateExperienceAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/experiences/{experience.Id}", experience);
     }
 
@@ -131,7 +130,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] ExperienceUpdateDto dto, CancellationToken ct)
     {
         var experience = await _siteContentService.UpdateExperienceAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(experience);
     }
 
@@ -140,7 +139,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteExperience(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteExperienceAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -160,7 +159,7 @@ public class AdminContentController : ControllerBase
         [FromBody] ServiceCreateDto dto, CancellationToken ct)
     {
         var service = await _siteContentService.CreateServiceAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/services/{service.Id}", service);
     }
 
@@ -170,7 +169,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] ServiceUpdateDto dto, CancellationToken ct)
     {
         var service = await _siteContentService.UpdateServiceAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(service);
     }
 
@@ -179,7 +178,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteService(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteServiceAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -199,7 +198,7 @@ public class AdminContentController : ControllerBase
         [FromBody] TestimonialCreateDto dto, CancellationToken ct)
     {
         var testimonial = await _siteContentService.CreateTestimonialAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/testimonials/{testimonial.Id}", testimonial);
     }
 
@@ -209,7 +208,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] TestimonialUpdateDto dto, CancellationToken ct)
     {
         var testimonial = await _siteContentService.UpdateTestimonialAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(testimonial);
     }
 
@@ -218,7 +217,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteTestimonial(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteTestimonialAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -238,7 +237,7 @@ public class AdminContentController : ControllerBase
         [FromBody] SocialLinkCreateDto dto, CancellationToken ct)
     {
         var link = await _siteContentService.CreateSocialLinkAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/social-links/{link.Id}", link);
     }
 
@@ -248,7 +247,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] SocialLinkUpdateDto dto, CancellationToken ct)
     {
         var link = await _siteContentService.UpdateSocialLinkAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(link);
     }
 
@@ -257,7 +256,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteSocialLink(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteSocialLinkAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 
@@ -277,7 +276,7 @@ public class AdminContentController : ControllerBase
         [FromBody] MenuItemCreateDto dto, CancellationToken ct)
     {
         var item = await _siteContentService.CreateMenuItemAsync(dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Created($"api/v1/admin/content/menu-items/{item.Id}", item);
     }
 
@@ -287,7 +286,7 @@ public class AdminContentController : ControllerBase
         Guid id, [FromBody] MenuItemUpdateDto dto, CancellationToken ct)
     {
         var item = await _siteContentService.UpdateMenuItemAsync(id, dto, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return Ok(item);
     }
 
@@ -296,7 +295,7 @@ public class AdminContentController : ControllerBase
     public async Task<IActionResult> DeleteMenuItem(Guid id, CancellationToken ct)
     {
         await _siteContentService.DeleteMenuItemAsync(id, ct);
-        await _outputCacheStore.EvictByTagAsync(PublicContentCacheTag, ct);
+        await _outputCacheStore.EvictByTagAsync(PolicyNames.PublicContentTag, ct);
         return NoContent();
     }
 }
