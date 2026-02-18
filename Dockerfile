@@ -9,6 +9,9 @@ COPY src/Portfolio.Application/Portfolio.Application.csproj src/Portfolio.Applic
 COPY src/Portfolio.Infrastructure/Portfolio.Infrastructure.csproj src/Portfolio.Infrastructure/
 COPY src/Portfolio.ServiceDefaults/Portfolio.ServiceDefaults.csproj src/Portfolio.ServiceDefaults/
 COPY src/Portfolio.Api/Portfolio.Api.csproj src/Portfolio.Api/
+COPY tests/Portfolio.Api.Tests/Portfolio.Api.Tests.csproj tests/Portfolio.Api.Tests/
+COPY tests/Portfolio.Application.Tests/Portfolio.Application.Tests.csproj tests/Portfolio.Application.Tests/
+COPY tests/Portfolio.Infrastructure.Tests/Portfolio.Infrastructure.Tests.csproj tests/Portfolio.Infrastructure.Tests/
 
 # Restore dependencies
 RUN dotnet restore
