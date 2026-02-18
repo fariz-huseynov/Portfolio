@@ -1,0 +1,62 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Dev@12345"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.1
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=Portfolio;User Id=sa;Password=Dev@12345;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      ConnectionStrings__Redis: "redis:6379"
+      Jwt__Secret: "ThisIsADevelopmentSecretKeyForJwtTokenGeneration123!"
+      Jwt__Issuer: "Portfolio"
+      Jwt__Audience: "Portfolio"
+      Seed__AdminEmail: "admin@portfolio.dev"
+      Seed__AdminPassword: "Admin@123456"
+      Email__Enabled: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://aspire-dashboard:18889"
+      OTEL_SERVICE_NAME: "portfolio-api"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - uploads-data:/app/wwwroot/uploads
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  uploads-data:

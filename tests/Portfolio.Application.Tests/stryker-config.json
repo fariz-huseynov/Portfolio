@@ -1,0 +1,18 @@
+{
+  "stryker-config": {
+    "project": "Portfolio.Application.csproj",
+    "reporters": ["html", "cleartext", "progress"],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 40
+    },
+    "mutate": [
+      "!**/obj/**",
+      "!**/bin/**",
+      "Services/BlogPostService.cs",
+      "Services/ProjectService.cs",
+      "Services/LeadService.cs"
+    ]
+  }
+}

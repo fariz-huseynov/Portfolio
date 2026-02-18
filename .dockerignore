@@ -1,0 +1,15 @@
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/wwwroot
+.env
+.env.*
+!.env.example
+*.md
+*.swp
+.claude/
